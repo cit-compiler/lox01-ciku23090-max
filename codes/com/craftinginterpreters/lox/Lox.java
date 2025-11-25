@@ -7,15 +7,11 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Scanner;
-
-// 【修正1】java.util.Scanner は削除します（自作Scannerを使うため）
-// import java.util.Scanner; 
 
 public class Lox {
-     static boolean hadError = false;
+    static boolean hadError = false;
 
-       public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException {
         if (args.length > 1) {
             System.out.println("Usage: jlox [script]");
             System.exit(64);
@@ -29,8 +25,6 @@ public class Lox {
     private static void runFile(String path) throws IOException {
         byte[] bytes = Files.readAllBytes(Paths.get(path));
         run(new String(bytes, Charset.defaultCharset()));
-        
-        // エラーがあったら終了コードで知らせる
         if (hadError) System.exit(65);
     }
 
@@ -42,21 +36,19 @@ public class Lox {
             String line = reader.readLine();
             if (line == null) break;
             run(line);
-            // 対話モードではエラーがあっても終了しないようにフラグを戻す
             hadError = false;
         }
     }
 
     private static void run(String source) {
-        // ここで使う Scanner は自作クラスです
+        // まだ Scanner クラスがないので、ここはエラーになりますが今は無視してOK
         Scanner scanner = new Scanner(source);
         List<Token> tokens = scanner.scanTokens();
 
-        // For now, just print the tokens.
         for (Token token : tokens) {
             System.out.println(token);
         }
-    } // 【修正3】ここで run メソッドをしっかり閉じる！
+    }
 
     static void error(int line, String message) {
         report(line, "", message);
