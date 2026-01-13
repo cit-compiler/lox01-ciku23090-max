@@ -1,13 +1,18 @@
 package com.craftinginterpreters.lox;
 
+import java.util.List;
+
 import static com.craftinginterpreters.lox.TokenType.*;
 
-class Interpreter implements Expr.Visitor<Object> {
+class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
+  // ★追加: 変数を記憶するための環境
+  private Environment environment = new Environment();
 
-  void interpret(Expr expression) {
+  void interpret(List<Stmt> statements) {
     try {
-      Object value = evaluate(expression);
-      System.out.println(stringify(value));
+      for (Stmt statement : statements) {
+        execute(statement);
+      }
     } catch (RuntimeError error) {
       Lox.runtimeError(error);
     }
@@ -25,6 +30,41 @@ class Interpreter implements Expr.Visitor<Object> {
 
   private Object evaluate(Expr expr) {
     return expr.accept(this);
+  }
+
+  private void execute(Stmt stmt) {
+    stmt.accept(this);
+  }
+
+  @Override
+  public Void visitExpressionStmt(Stmt.Expression stmt) {
+    evaluate(stmt.expression);
+    return null;
+  }
+
+  @Override
+  public Void visitPrintStmt(Stmt.Print stmt) {
+    Object value = evaluate(stmt.expression);
+    System.out.println(stringify(value));
+    return null;
+  }
+
+  // ★追加: 変数宣言 (var a = 1;) の処理
+  @Override
+  public Void visitVarStmt(Stmt.Var stmt) {
+    Object value = null;
+    if (stmt.initializer != null) {
+      value = evaluate(stmt.initializer);
+    }
+
+    environment.define(stmt.name.lexeme, value);
+    return null;
+  }
+
+  // ★追加: 変数の使用 (print a;) の処理
+  @Override
+  public Object visitVariableExpr(Expr.Variable expr) {
+    return environment.get(expr.name);
   }
 
   @Override
@@ -67,7 +107,7 @@ class Interpreter implements Expr.Visitor<Object> {
         checkNumberOperands(expr.operator, left, right);
         return (double) left <= (double) right;
       case MINUS:
-        checkNumberOperands(expr.operator, left, right); // ここを修正しました（両方チェックが必要）
+        checkNumberOperands(expr.operator, left, right);
         return (double) left - (double) right;
       case PLUS:
         if (left instanceof Double && right instanceof Double) {
@@ -124,5 +164,13 @@ class Interpreter implements Expr.Visitor<Object> {
     if (left instanceof Double && right instanceof Double) return;
 
     throw new RuntimeError(operator, "Operands must be numbers.");
+  }
+
+  // ★変更: 代入式の処理を実装しました
+  @Override
+  public Object visitAssignExpr(Expr.Assign expr) {
+    Object value = evaluate(expr.value);
+    environment.assign(expr.name, value);
+    return value;
   }
 }

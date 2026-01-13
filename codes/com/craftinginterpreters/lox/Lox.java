@@ -48,16 +48,17 @@ public class Lox {
     Scanner scanner = new Scanner(source);
     List<Token> tokens = scanner.scanTokens();
     
+    // トークンを渡してパーサーを作る
     Parser parser = new Parser(tokens);
-    Expr expression = parser.parse();
+    
+    // 文（Statement）のリストとして解析する
+    List<Stmt> statements = parser.parse();
 
     // Syntax Errorがあれば実行しない
     if (hadError) return;
 
-    // 計算を実行して結果を表示
-    interpreter.interpret(expression);
-    
-    // AstPrinter はもう不要なので削除しました
+    // インタプリタで実行する
+    interpreter.interpret(statements);
   }
 
   static void error(Token token, String message) {

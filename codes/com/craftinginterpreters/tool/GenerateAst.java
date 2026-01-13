@@ -12,11 +12,23 @@ public class GenerateAst {
       System.exit(64);
     }
     String outputDir = args[0];
+
+    // 式 (Expression) の定義
     defineAst(outputDir, "Expr", Arrays.asList(
       "Binary   : Expr left, Token operator, Expr right",
+     "Assign   : Token name, Expr value",      // ★ これを追加
+     "Binary   : Expr left, Token operator, Expr right",
       "Grouping : Expr expression",
       "Literal  : Object value",
-      "Unary    : Token operator, Expr right"
+      "Unary    : Token operator, Expr right",
+      "Variable : Token name" // ★追加: 変数アクセス用
+    ));
+
+    // 文 (Statement) の定義
+    defineAst(outputDir, "Stmt", Arrays.asList(
+      "Expression : Expr expression",
+      "Print      : Expr expression",
+      "Var        : Token name, Expr initializer" // ★追加: 変数宣言用
     ));
   }
 
@@ -56,7 +68,7 @@ public class GenerateAst {
     for (String type : types) {
       String typeName = type.split(":")[0].trim();
       writer.println("    R visit" + typeName + baseName + "(" +
-          typeName + " " + baseName.toLowerCase() + ");");
+          typeName + " " + baseName + ");");
     }
 
     writer.println("  }");
@@ -70,7 +82,6 @@ public class GenerateAst {
     // Constructor.
     writer.println("    " + className + "(" + fieldList + ") {");
 
-    // Store parameters in fields.
     String[] fields = fieldList.split(", ");
     for (String field : fields) {
       String name = field.split(" ")[1];
